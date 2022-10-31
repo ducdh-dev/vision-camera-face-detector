@@ -21,10 +21,9 @@ public func getImageFaceFromBuffer(from sampleBuffer: CMSampleBuffer?, rectImage
     let ciimage = CIImage(cvPixelBuffer: imageBuffer)
     let context = CIContext(options: nil)
     let cgImage = context.createCGImage(ciimage, from: ciimage.extent)!
-    
+
     if (!rectImage.isNull) {
-        let imageRef: CGImage = cgImage.cropping(to: rectImage)!
-        let imageCrop: UIImage = UIImage(cgImage: imageRef, scale: 0.5, orientation: .right)
+        let imageCrop: UIImage = UIImage(cgImage: cgImage, scale: 0.5, orientation: .right)
         return imageCrop
     } else {
         return nil

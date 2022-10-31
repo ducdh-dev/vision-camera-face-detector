@@ -37,7 +37,7 @@ public class VisionCameraFaceDetectorPlugin extends FrameProcessorPlugin {
     new FaceDetectorOptions.Builder()
       .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
       .setContourMode(FaceDetectorOptions.CONTOUR_MODE_NONE)
-      .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+      .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
       .setMinFaceSize(0.15f)
       .build();
 
@@ -46,22 +46,10 @@ public class VisionCameraFaceDetectorPlugin extends FrameProcessorPlugin {
   private WritableMap processBoundingBox(Rect boundingBox) {
     WritableMap bounds = Arguments.createMap();
 
-    // Calculate offset (we need to center the overlay on the target)
-    Double offsetX = (boundingBox.exactCenterX() - ceil(boundingBox.width())) / 2.0f;
-    Double offsetY = (boundingBox.exactCenterY() - ceil(boundingBox.height())) / 2.0f;
-
-    Double x = boundingBox.right + offsetX;
-    Double y = boundingBox.top + offsetY;
-
-    bounds.putDouble("x", boundingBox.centerX() + (boundingBox.centerX() - x));
-    bounds.putDouble("y", boundingBox.centerY() + (y - boundingBox.centerY()));
+    bounds.putDouble("top", boundingBox.top);
+    bounds.putDouble("left", boundingBox.left);
     bounds.putDouble("width", boundingBox.width());
     bounds.putDouble("height", boundingBox.height());
-
-    bounds.putDouble("boundingCenterX", boundingBox.centerX());
-    bounds.putDouble("boundingCenterY", boundingBox.centerY());
-    bounds.putDouble("boundingExactCenterX", boundingBox.exactCenterX());
-    bounds.putDouble("boundingExactCenterY", boundingBox.exactCenterY());
 
     return bounds;
   }
@@ -138,23 +126,14 @@ public class VisionCameraFaceDetectorPlugin extends FrameProcessorPlugin {
         for (Face face : faces) {
           WritableMap map = new WritableNativeMap();
           Bitmap bmpFrameResult = ImageConvertUtils.getInstance().getUpRightBitmap(image);
-          Bitmap bmpFaceResult = Bitmap.createBitmap(TF_OD_API_INPUT_SIZE, TF_OD_API_INPUT_SIZE, Bitmap.Config.ARGB_8888);
-          final RectF faceBB = new RectF(face.getBoundingBox());
-          final Canvas cvFace = new Canvas(bmpFaceResult);
-          float sx = ((float) TF_OD_API_INPUT_SIZE) / faceBB.width();
-          float sy = ((float) TF_OD_API_INPUT_SIZE) / faceBB.height();
-          Matrix matrix = new Matrix();
-          matrix.postTranslate(-faceBB.left, -faceBB.top);
-          matrix.postScale(sx, sy);
-          cvFace.drawBitmap(bmpFrameResult, matrix, null);
-          String imageResult = new Convert().getBase64Image(bmpFaceResult);
+          String imageResult = new Convert().getBase64Image(bmpFrameResult);
 
           map.putDouble("rollAngle", face.getHeadEulerAngleZ()); // Head is rotated to the left rotZ degrees
           map.putDouble("pitchAngle", face.getHeadEulerAngleX()); // Head is rotated to the right rotX degrees
           map.putDouble("yawAngle", face.getHeadEulerAngleY());  // Head is tilted sideways rotY degrees
-          map.putDouble("leftEyeOpenProbability", face.getLeftEyeOpenProbability());
-          map.putDouble("rightEyeOpenProbability", face.getRightEyeOpenProbability());
-          map.putDouble("smilingProbability", face.getSmilingProbability());
+//           map.putDouble("leftEyeOpenProbability", face.getLeftEyeOpenProbability());
+//           map.putDouble("rightEyeOpenProbability", face.getRightEyeOpenProbability());
+//           map.putDouble("smilingProbability", face.getSmilingProbability());
 
 //          WritableMap contours = processFaceContours(face);
           WritableMap bounds = processBoundingBox(face.getBoundingBox());
